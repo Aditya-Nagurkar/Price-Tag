@@ -1,0 +1,198 @@
+{% extends 'tracker/base.html' %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{% url 'dashboard' %}"
+        class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 flex items-center gap-2">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+
+<div class="bg-white dark:bg-dark rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-0">
+
+        <!-- Column 1: Image (4 cols) -->
+        <div
+            class="lg:col-span-4 p-8 flex items-center justify-center bg-gray-50 dark:bg-gray-800 border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-gray-700">
+            {% if product.image_url %}
+            <img src="{{ product.image_url }}" alt="{{ product.name }}"
+                class="max-h-96 w-auto object-contain rounded-lg shadow-sm mix-blend-multiply dark:mix-blend-normal">
+            {% else %}
+            <div class="text-gray-300 dark:text-gray-600 text-9xl">
+                <i class="fas fa-image"></i>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Column 2: Info & Chart (5 cols) -->
+        <div class="lg:col-span-5 p-8 border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-gray-700">
+            <div class="flex justify-between items-start mb-4">
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white leading-tight">{{ product.name }}</h1>
+            </div>
+
+            <div class="flex items-center gap-4 mb-6">
+                <div class="text-4xl font-bold text-gray-900 dark:text-white mb-2">{{ product.currency }}{{ product.current_price }}</div>
+                <div class="text-sm text-gray-500 dark:text-gray-400">Target: {{ product.currency }}{{ product.target_price }}</div>
+                {% if product.is_below_threshold %}
+                <span
+                    class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 px-3 py-1 rounded-full text-sm font-bold">
+                    {{ deal_score }}% OFF TARGET
+                </span>
+                {% endif %}
+            </div>
+
+            <div class="mb-8">
+                <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Price
+                    History</h3>
+                <div class="relative h-64 w-full">
+                    <canvas id="priceChart"></canvas>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">Target Price</div>
+                    <div class="text-lg font-semibold">{{ product.currency }}{{ product.target_price }}</div>
+                </div>
+                <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">Lowest Price</div>
+                    <div class="text-lg font-semibold text-green-500">
+                        {% with lowest=product.price_history.all|dictsort:"price"|first %}
+                        {{ product.currency }}{{ lowest.price|default:product.current_price }}
+                        {% endwith %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Column 3: Actions & Score (3 cols) -->
+        <div class="lg:col-span-3 p-8 bg-gray-50 dark:bg-gray-800/50">
+            <!-- Deal Score Gauge -->
+            <div class="mb-8 text-center">
+                <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Deal
+                    Score</h3>
+                <div class="relative w-32 h-32 mx-auto">
+                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                        <!-- Background Circle -->
+                        <path class="text-gray-200 dark:text-gray-700"
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none" stroke="currentColor" stroke-width="3" />
+                        <!-- Value Circle -->
+                        <path class="text-secondary transition-all duration-1000 ease-out"
+                            stroke-dasharray="{{ deal_score }}, 100"
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none" stroke="currentColor" stroke-width="3" />
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center flex-col">
+                        <span class="text-3xl font-bold text-gray-900 dark:text-white">{{ deal_score }}</span>
+                        <span class="text-xs text-gray-500">SCORE</span>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-500 mt-2">
+                    {% if deal_score >= 80 %}Excellent Deal!{% elif deal_score >= 50 %}Good Price{% else %}Wait for
+                    Drop{% endif %}
+                </p>
+            </div>
+
+            <!-- Actions -->
+            <div class="space-y-3">
+                <a href="{{ product.url }}" target="_blank"
+                    class="block w-full bg-primary hover:bg-blue-600 text-white text-center py-3 rounded-lg font-bold shadow-lg shadow-blue-500/30 transition-all transform hover:-translate-y-0.5">
+                    Buy Now
+                </a>
+                <a href="{% url 'update_prices' %}"
+                    class="block w-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-center py-3 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                    Check Price
+                </a>
+                <a href="{% url 'delete_product' product.id %}" onclick="return confirm('Stop tracking this product?')"
+                    class="block w-full text-red-500 hover:text-red-600 text-center py-2 text-sm">
+                    Stop Tracking
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', async function () {
+        const ctx = document.getElementById('priceChart').getContext('2d');
+
+        try {
+            const response = await fetch(`/history/{{ product.id }}/`);
+            const data = await response.json();
+
+            // Create gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(16, 185, 129, 0.2)');
+            gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Price',
+                        data: data.prices,
+                        borderColor: '#10B981',
+                        backgroundColor: gradient,
+                        borderWidth: 2,
+                        pointBackgroundColor: '#10B981',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#10B981',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: 'rgba(255,255,255,0.1)',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function (context) {
+                                    return '{{ product.currency }}' + context.parsed.y;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: false,
+                            grid: { display: false }
+                        },
+                        y: {
+                            display: true,
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                callback: function (value) { return '{{ product.currency }}' + value; },
+                                color: '#9CA3AF',
+                                font: { size: 10 }
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error loading chart:', error);
+        }
+    });
+</script>
+{% endblock %}
