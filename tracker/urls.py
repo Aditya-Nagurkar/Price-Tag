@@ -7,6 +7,7 @@ urlpatterns = [
     path('add/', views.add_product, name='add_product'),
     path('update/', views.update_prices, name='update_prices'),
     path('delete/<int:product_id>/', views.delete_product, name='delete_product'),
+    path('api/search_alternatives/<int:product_id>/', views.search_alternatives, name='search_alternatives'),
     path('history/<int:product_id>/', views.get_price_history, name='get_price_history'),
     path('product/<int:product_id>/', views.product_detail, name='product_detail'),
     path('login/', auth_views.LoginView.as_view(template_name='tracker/login.html'), name='login'),

@@ -31,12 +31,14 @@
             </div>
 
             <div class="flex items-center gap-4 mb-6">
-                <div class="text-4xl font-bold text-gray-900 dark:text-white mb-2">{{ product.currency }}{{ product.current_price }}</div>
+                <div
+                    class="text-4xl font-bold {% if product.current_price and product.target_price %}{% if product.current_price <= product.target_price %}text-green-600 dark:text-green-400{% else %}text-red-600 dark:text-red-400{% endif %}{% else %}text-gray-900 dark:text-white{% endif %} mb-2">
+                    {{ product.currency }}{{ product.current_price }}</div>
                 <div class="text-sm text-gray-500 dark:text-gray-400">Target: {{ product.currency }}{{ product.target_price }}</div>
                 {% if product.is_below_threshold %}
                 <span
                     class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 px-3 py-1 rounded-full text-sm font-bold">
-                    {{ deal_score }}% OFF TARGET
+                    {{ percentage_diff }}% BELOW TARGET
                 </span>
                 {% endif %}
             </div>
@@ -48,11 +50,12 @@
                 </div>
                 <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                     <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">Lowest Price</div>
-                    <div class="text-lg font-semibold text-green-500">
-                        {% with lowest=product.price_history.all|dictsort:"price"|first %}
+                    {% with lowest=product.price_history.all|dictsort:"price"|first %}
+                    <div
+                        class="text-lg font-semibold {% if lowest.price and product.target_price %}{% if lowest.price <= product.target_price %}text-green-500{% else %}text-gray-900 dark:text-white{% endif %}{% else %}text-gray-900 dark:text-white{% endif %}">
                         {{ product.currency }}{{ lowest.price|default:product.current_price }}
-                        {% endwith %}
                     </div>
+                    {% endwith %}
                 </div>
             </div>
         </div>
@@ -105,5 +108,117 @@
     </div>
 </div>
 
+
+<!-- Comparison Section -->
+<div class="mt-8 bg-white dark:bg-dark rounded-xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white">Compare Prices</h2>
+        <button id="compare-btn" onclick="fetchAlternatives()"
+            class="bg-secondary hover:bg-teal-600 text-white px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
+            <i class="fas fa-search"></i> Find Better Deals
+        </button>
+    </div>
+
+    <div id="comparison-results" class="hidden">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="results-grid">
+            <!-- Results will be injected here -->
+        </div>
+    </div>
+
+    <div id="comparison-loading" class="hidden text-center py-8">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent"></div>
+        <p class="mt-2 text-gray-500">Searching other stores...</p>
+    </div>
+
+    <div id="comparison-empty" class="hidden text-center py-8 text-gray-500">
+        No alternative prices found.
+    </div>
+</div>
+
+<script>
+    function fetchAlternatives() {
+        const btn = document.getElementById('compare-btn');
+        const loading = document.getElementById('comparison-loading');
+        const resultsDiv = document.getElementById('comparison-results');
+        const grid = document.getElementById('results-grid');
+        const empty = document.getElementById('comparison-empty');
+
+        // UI State
+        btn.disabled = true;
+        btn.classList.add('opacity-50', 'cursor-not-allowed');
+        loading.classList.remove('hidden');
+        resultsDiv.classList.add('hidden');
+        empty.classList.add('hidden');
+        grid.innerHTML = '';
+
+        fetch("{% url 'search_alternatives' product.id %}")
+            .then(response => response.json())
+            .then(data => {
+                loading.classList.add('hidden');
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+
+                if (data.results && data.results.length > 0) {
+                    resultsDiv.classList.remove('hidden');
+
+                    // Group results by source
+                    const groupedResults = {};
+                    data.results.forEach(item => {
+                        if (!groupedResults[item.source]) {
+                            groupedResults[item.source] = [];
+                        }
+                        groupedResults[item.source].push(item);
+                    });
+
+                    // Render each source group
+                    Object.keys(groupedResults).forEach(source => {
+                        const items = groupedResults[source];
+
+                        // Create section header
+                        const sectionHeader = document.createElement('div');
+                        sectionHeader.className = 'col-span-full mt-4 first:mt-0';
+                        sectionHeader.innerHTML = `
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">${source}</h3>
+                                <span class="text-sm text-gray-500 dark:text-gray-400">(${items.length} ${items.length === 1 ? 'result' : 'results'})</span>
+                            </div>
+                            <div class="h-px bg-gray-200 dark:bg-gray-700 mt-2"></div>
+                        `;
+                        grid.appendChild(sectionHeader);
+
+                        // Render items for this source
+                        items.forEach(item => {
+                            const card = document.createElement('div');
+                            card.className = 'bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 flex justify-between items-center';
+
+                            const currentPrice = parseFloat("{{ product.current_price|default:0|stringformat:'f' }}");
+                            const priceClass = item.price < currentPrice ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-white';
+
+                            card.innerHTML = `
+                            <div>
+                                <div class="font-medium text-gray-900 dark:text-white line-clamp-1" title="${item.title}">${item.title}</div>
+                                <div class="text-lg font-bold ${priceClass} mt-1">${item.currency}${item.price}</div>
+                            </div>
+                            <a href="${item.url}" target="_blank" class="ml-4 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-primary border border-gray-200 dark:border-gray-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap">
+                                View
+                            </a>
+                        `;
+                            grid.appendChild(card);
+                        });
+                    });
+                } else {
+                    empty.classList.remove('hidden');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                loading.classList.add('hidden');
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                empty.textContent = "Error searching for prices. Please try again.";
+                empty.classList.remove('hidden');
+            });
+    }
+</script>
 
 {% endblock %}

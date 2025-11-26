@@ -1,0 +1,27 @@
+Testing search_flipkart with query: 'CMF by Nothing Buds 2a'
+DEBUG: Executing modified search_flipkart
+DEBUG: Found products in slot 1
+DEBUG: Found products in slot 2
+DEBUG: Found products in slot 4
+DEBUG: Found products in slot 6
+DEBUG: Found products in slot 7
+
+Found 3 results:
+
+Result 1:
+  Title: CMF by Nothing...
+  Price: ₹2499.0
+  Source: Flipkart
+  URL: https://www.flipkart.com/cmf-nothing-buds-2a-42-db-anc-12-4mm-driver-dirac-tuned-ultra-bass-tech-35-5-hrs-bluetooth/p/itm93873fb1a3a49?pid=ACCHBK3PNKBGXFHZ&lid=LSTACCHBK3PNKBGXFHZBF9JX5&marketplace=FLIPKART&hl_lid=&q=CMF+by+Nothing+Buds+2a&store=0pm%2Ffcn%2F821
+
+Result 2:
+  Title: CMF by Nothing...
+  Price: ₹2499.0
+  Source: Flipkart
+  URL: https://www.flipkart.com/cmf-nothing-buds-2a-42-db-anc-12-4mm-driver-dirac-tuned-ultra-bass-tech-35-5-hrs-bluetooth/p/itm61f9f1bbef5eb?pid=ACCHBK3PYHGHTGAZ&lid=LSTACCHBK3PYHGHTGAZYFKMAY&marketplace=FLIPKART&hl_lid=&q=CMF+by+Nothing+Buds+2a&store=0pm%2Ffcn%2F821
+
+Result 3:
+  Title: CMF by Nothing...
+  Price: ₹4299.0
+  Source: Flipkart
+  URL: https://www.flipkart.com/cmf-nothing-buds-pro-2-50-db-anc-hi-res-ldac-smart-dial-spatial-audio-dual-drivers-bluetooth/p/itm674bc8d75f1ff?pid=ACCHFZ2FERECPNGC&lid=LSTACCHFZ2FERECPNGCO2GZUC&marketplace=FLIPKART&hl_lid=&q=CMF+by+Nothing+Buds+2a&store=0pm%2Ffcn%2F821

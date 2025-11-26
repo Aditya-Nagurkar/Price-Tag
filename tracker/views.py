@@ -1,11 +1,14 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from .models import Product, PriceHistory
-from .scraper import get_product_details
+from .scraper import get_product_details, search_products
 from django.utils import timezone
+from django.http import JsonResponse
 
 def dashboard(request):
-    products = Product.objects.all().order_by('-created_at')
+    if not request.user.is_authenticated:
+        return redirect('login')
+    products = Product.objects.filter(user=request.user).order_by('-created_at')
     total_items = products.count()
     deals_found = sum(1 for p in products if p.is_below_threshold)
     
@@ -36,7 +39,8 @@ def add_product(request):
                         currency=details.get('currency', '₹'),
                         target_price=target_price,
                         current_price=details['price'],
-                        last_checked=timezone.now() if details['price'] else None
+                        last_checked=timezone.now() if details['price'] else None,
+                        user=request.user
                     )
                     
                     if details['price']:
@@ -96,8 +100,17 @@ def update_prices(request):
                 subject = f"Price Drop Alert: {product.name}"
                 message = f"Good news! The price for {product.name} has dropped to {product.current_price}. This is below your target of {product.target_price}.\n\nCheck it out here: {product.url}"
                 from_email = settings.EMAIL_HOST_USER
-                recipient_list = [request.user.email] if request.user.is_authenticated else ['user@example.com']
-                print(f"DEBUG: Sending email to {recipient_list}")
+                
+                # Send to the product owner if they exist and have an email
+                recipient_list = []
+                if product.user and product.user.email:
+                    recipient_list = [product.user.email]
+                else:
+                    # Fallback or skip? For now, let's log it.
+                    print(f"DEBUG: No user linked to product {product.name}, skipping email.")
+                
+                if recipient_list:
+                    print(f"DEBUG: Sending email to {recipient_list}")
                 
                 try:
                     send_mail(subject, message, from_email, recipient_list)
@@ -138,31 +151,80 @@ def get_price_history(request, product_id):
     return JsonResponse(data)
 
 def product_detail(request, product_id):
+    """View product details and price history."""
     product = get_object_or_404(Product, id=product_id)
     
-    # Calculate Deal Score (0-100)
-    # Logic: 
-    # If current <= target, score is high (80-100)
-    # If current > target, score drops
+    # Auto-fetch price if it's None
+    if product.current_price is None:
+        details = get_product_details(product.url)
+        if not details['error'] and details['price']:
+            product.current_price = details['price']
+            product.save()
+            # Also create price history entry
+            PriceHistory.objects.create(
+                product=product,
+                price=details['price']
+            )
+        else:
+            # Fallback: Use search scraper if product page scraper fails
+            # Search scrapers are more reliable than product page scrapers
+            search_query = " ".join(product.name.split()[:5])
+            search_results = search_products(search_query)
+            
+            # Use the first result's price if available
+            if search_results and len(search_results) > 0:
+                first_result = search_results[0]
+                product.current_price = first_result['price']
+                product.save()
+                # Create price history entry
+                PriceHistory.objects.create(
+                    product=product,
+                    price=first_result['price']
+                )
+    
+    # Get price history for chart
+    history = product.price_history.all().order_by('timestamp')
+    
+    # Calculate deal score (0-100)
     deal_score = 0
     if product.current_price and product.target_price:
         ratio = float(product.target_price) / float(product.current_price)
         if ratio >= 1:
-            # Good deal
-            deal_score = min(100, 80 + (ratio - 1) * 100)
+            deal_score = min(100, int(ratio * 100))
         else:
-            # Bad deal
-            deal_score = max(0, 80 - (1 - ratio) * 200)
-            
+            deal_score = max(0, int((2 - (1/ratio)) * 100))
+    
+    # Calculate percentage difference if below target
+    percentage_diff = None
+    if product.current_price and product.target_price and product.current_price < product.target_price:
+        diff = float(product.target_price) - float(product.current_price)
+        percentage_diff = round((diff / float(product.target_price)) * 100, 1)
+    
     context = {
         'product': product,
-        'deal_score': int(deal_score),
-    }
-    context = {
-        'product': product,
-        'deal_score': int(deal_score),
+        'history': history,
+        'deal_score': deal_score,
+        'percentage_diff': percentage_diff,
     }
     return render(request, 'tracker/product_detail.html', context)
+
+def search_alternatives(request, product_id):
+    """API endpoint to search for alternative prices."""
+    try:
+        product = Product.objects.get(id=product_id)
+        # Use product name for search, stripping common noise words if needed
+        query = product.name
+        
+        # Simple cleanup: take first 4-5 words to avoid over-specificity
+        query = " ".join(query.split()[:5])
+        
+        # Search all marketplaces (including source)
+        results = search_products(query)
+        return JsonResponse({'results': results})
+    except Product.DoesNotExist:
+        return JsonResponse({'error': 'Product not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 from django.contrib.auth import login
 from .forms import SignUpForm
