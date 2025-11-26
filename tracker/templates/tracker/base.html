@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Price Tracker</title>
+    <title>PriceTag</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script>
@@ -35,9 +35,24 @@
     <nav class="bg-white dark:bg-dark shadow-md">
         <div class="container mx-auto px-6 py-4 flex justify-between items-center">
             <a href="{% url 'dashboard' %}" class="text-2xl font-bold text-primary flex items-center gap-2">
-                <i class="fas fa-tag"></i> PriceTracker
+                <i class="fas fa-tag"></i> PriceTag
             </a>
             <div class="flex items-center gap-4">
+                {% if user.is_authenticated %}
+                <span class="text-sm text-gray-600 dark:text-gray-400 hidden md:inline">{{ user.email }}</span>
+                <form method="post" action="{% url 'logout' %}" class="inline">
+                    {% csrf_token %}
+                    <button type="submit"
+                        class="text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors">
+                        Logout
+                    </button>
+                </form>
+                {% else %}
+                <a href="{% url 'login' %}"
+                    class="text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors">
+                    Login
+                </a>
+                {% endif %}
                 <button id="theme-toggle"
                     class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
                     <i class="fas fa-moon dark:hidden"></i>

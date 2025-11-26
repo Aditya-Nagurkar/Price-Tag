@@ -33,7 +33,7 @@ def add_product(request):
                         name=details['title'] or "Unknown Product",
                         url=url,
                         image_url=details.get('image_url'),
-                        currency=details.get('currency', '$'),
+                        currency=details.get('currency', '₹'),
                         target_price=target_price,
                         current_price=details['price'],
                         last_checked=timezone.now() if details['price'] else None
@@ -88,23 +88,25 @@ def update_prices(request):
             updated_count += 1
             
             # Check for price drop and send email
+            # Check for price drop and send email
             if product.is_below_threshold:
-                # Simple logic: Send email if it's a deal. 
-                # In a real app, we'd check if we already sent an email for this specific drop to avoid spam.
+                print(f"DEBUG: Product {product.name} is below threshold!")
+                print(f"DEBUG: Current: {product.current_price}, Target: {product.target_price}")
+                
                 subject = f"Price Drop Alert: {product.name}"
                 message = f"Good news! The price for {product.name} has dropped to {product.current_price}. This is below your target of {product.target_price}.\n\nCheck it out here: {product.url}"
                 from_email = settings.EMAIL_HOST_USER
-                recipient_list = ['user@example.com'] # Hardcoded for now, would come from User model
+                recipient_list = [request.user.email] if request.user.is_authenticated else ['user@example.com']
+                print(f"DEBUG: Sending email to {recipient_list}")
                 
                 try:
                     send_mail(subject, message, from_email, recipient_list)
-                    print(f"Email sent for {product.name}")
+                    print(f"DEBUG: Email sent successfully for {product.name}")
                 except Exception as e:
-                    print(f"Failed to send email: {e}")
-            # Check for price drop and send email
-            if product.is_below_threshold:
-                # ... email logic ...
-                pass
+                    print(f"DEBUG: Failed to send email: {e}")
+            else:
+                print(f"DEBUG: Product {product.name} is NOT below threshold. Current: {product.current_price}, Target: {product.target_price}")
+
 
         elif details['error']:
             messages.warning(request, f"Failed to update {product.name}: {details['error']}")
@@ -128,7 +130,8 @@ def get_price_history(request, product_id):
     
     data = {
         'labels': [h.timestamp.strftime('%Y-%m-%d %H:%M:%S') for h in history],
-        'prices': [float(h.price) for h in history]
+        'prices': [float(h.price) for h in history],
+        'currency': product.currency
     }
     
     from django.http import JsonResponse
@@ -155,4 +158,37 @@ def product_detail(request, product_id):
         'product': product,
         'deal_score': int(deal_score),
     }
+    context = {
+        'product': product,
+        'deal_score': int(deal_score),
+    }
     return render(request, 'tracker/product_detail.html', context)
+
+from django.contrib.auth import login
+from .forms import SignUpForm
+
+def signup(request):
+    if request.method == 'POST':
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user, backend='tracker.backends.EmailBackend')
+            
+            # Send welcome email
+            try:
+                greeting_name = user.first_name if user.first_name else "there"
+                send_mail(
+                    'Welcome to PriceTag!',
+                    f'Hi {greeting_name},\n\nThanks for signing up for PriceTag! You can now track product prices and get notified when they drop.\n\nHappy tracking!',
+                    settings.EMAIL_HOST_USER,
+                    [user.email],
+                    fail_silently=True,
+                )
+            except Exception as e:
+                print(f"Failed to send welcome email: {e}")
+                
+            messages.success(request, "Registration successful!")
+            return redirect('dashboard')
+    else:
+        form = SignUpForm()
+    return render(request, 'tracker/signup.html', {'form': form})

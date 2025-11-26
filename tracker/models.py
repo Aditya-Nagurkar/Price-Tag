@@ -5,7 +5,7 @@ class Product(models.Model):
     name = models.CharField(max_length=255)
     url = models.URLField()
     image_url = models.URLField(max_length=500, null=True, blank=True)
-    currency = models.CharField(max_length=5, default='$')
+    currency = models.CharField(max_length=5, default='₹')
     target_price = models.DecimalField(max_digits=10, decimal_places=2)
     current_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     is_active = models.BooleanField(default=True)

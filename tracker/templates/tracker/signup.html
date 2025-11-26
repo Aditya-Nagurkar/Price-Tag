@@ -1,0 +1,53 @@
+{% extends 'tracker/base.html' %}
+
+{% block content %}
+<div class="flex justify-center items-center min-h-[calc(100vh-200px)]">
+    <div class="w-full max-w-md">
+        <div class="bg-white dark:bg-dark rounded-lg shadow-lg overflow-hidden">
+            <div class="p-8">
+                <h2 class="text-3xl font-bold text-center text-gray-800 dark:text-white mb-8">Create Account</h2>
+                
+                <form method="post" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    {% if form.errors %}
+                        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
+                            <p class="font-bold">Error</p>
+                            {% for field in form %}
+                                {% for error in field.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            {% endfor %}
+                            {% for error in form.non_field_errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    {% for field in form %}
+                    <div>
+                        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ field.label }}</label>
+                        <input type="{{ field.field.widget.input_type }}" name="{{ field.name }}" id="{{ field.id_for_label }}" 
+                            {% if field.field.required %}required{% endif %}
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-darker dark:text-white transition-colors duration-200">
+                        {% if field.help_text %}
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ field.help_text }}</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    
+                    <button type="submit" 
+                        class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-200 transform hover:scale-[1.02]">
+                        Sign Up
+                    </button>
+                </form>
+            </div>
+            <div class="px-8 py-4 bg-gray-50 dark:bg-gray-700 border-t border-gray-100 dark:border-gray-600 text-center">
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    Already have an account? <a href="{% url 'login' %}" class="text-primary hover:underline">Log in</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

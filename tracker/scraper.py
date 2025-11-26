@@ -255,7 +255,7 @@ def get_product_details(url):
         return {
             'title': title,
             'price': price,
-            'currency': currency,
+            'currency': '₹',
             'image_url': image_url,
             'error': None
         }
@@ -264,7 +264,7 @@ def get_product_details(url):
         return {
             'title': None,
             'price': None,
-            'currency': '$',
+            'currency': '₹',
             'image_url': None,
             'error': str(e)
         }
