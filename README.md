@@ -23,8 +23,8 @@ PriceTag is a smart, real-time price tracking application designed to help you s
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/pricetag.git
-   cd pricetag
+   git clone https://github.com/Aditya-Nagurkar/Price-Tag.git
+   cd Price-Tag
    ```
 
 2. **Install dependencies**
