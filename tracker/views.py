@@ -19,6 +19,12 @@ def dashboard(request):
     }
     return render(request, 'tracker/dashboard.html', context)
 
+def product_list(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
+    products = Product.objects.filter(user=request.user).order_by('-created_at')
+    return render(request, 'tracker/product_list.html', {'products': products})
+
 def add_product(request):
     if request.method == 'POST':
         url = request.POST.get('url')

@@ -3,55 +3,88 @@
 {% block content %}
 <div class="mb-6">
     <a href="{% url 'dashboard' %}"
-        class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 flex items-center gap-2">
+        class="inline-flex items-center gap-2 text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-white transition-colors font-medium">
         <i class="fas fa-arrow-left"></i> Back to Dashboard
     </a>
 </div>
 
-<div class="bg-white dark:bg-dark rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+<div class="glass-panel rounded-3xl shadow-2xl overflow-hidden">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-0">
 
         <!-- Column 1: Image (4 cols) -->
         <div
-            class="lg:col-span-4 p-8 flex items-center justify-center bg-gray-50 dark:bg-gray-800 border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-gray-700">
+            class="lg:col-span-4 p-8 flex items-center justify-center bg-gray-50/50 dark:bg-white/5 border-b lg:border-b-0 lg:border-r border-gray-100 dark:border-white/5 relative group">
+            <!-- Background Glow -->
+            <div
+                class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+            </div>
+
             {% if product.image_url %}
             <img src="{{ product.image_url }}" alt="{{ product.name }}"
-                class="max-h-96 w-auto object-contain rounded-lg shadow-sm mix-blend-multiply dark:mix-blend-normal">
+                class="max-h-80 w-auto object-contain relative z-10 drop-shadow-xl mix-blend-multiply dark:mix-blend-normal transition-transform duration-500 group-hover:scale-105">
             {% else %}
-            <div class="text-gray-300 dark:text-gray-600 text-9xl">
+            <div class="text-gray-300 dark:text-gray-600 text-8xl relative z-10">
                 <i class="fas fa-image"></i>
             </div>
             {% endif %}
         </div>
 
-        <!-- Column 2: Info & Chart (5 cols) -->
-        <div class="lg:col-span-5 p-8 border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-gray-700">
-            <div class="flex justify-between items-start mb-4">
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white leading-tight">{{ product.name }}</h1>
+        <!-- Column 2: Info & Stats (5 cols) -->
+        <div class="lg:col-span-5 p-8 border-b lg:border-b-0 lg:border-r border-gray-100 dark:border-white/5">
+            <div class="mb-6">
+                <div class="flex items-center gap-2 mb-2">
+                    <span
+                        class="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wide border border-primary/20">
+                        Tracked Product
+                    </span>
+                    {% if product.is_below_threshold %}
+                    <span
+                        class="px-2.5 py-0.5 rounded-full bg-green-500/10 text-green-500 text-xs font-bold uppercase tracking-wide border border-green-500/20 animate-pulse">
+                        Price Drop
+                    </span>
+                    {% endif %}
+                </div>
+                <h1 class="text-3xl font-bold dark:text-white leading-tight mb-2">{{ product.name }}</h1>
+                <a href="{{ product.url }}" target="_blank"
+                    class="text-sm text-gray-500 dark:text-gray-400 hover:text-primary transition-colors flex items-center gap-1">
+                    <i class="fas fa-link"></i> View on Store
+                </a>
             </div>
 
-            <div class="flex items-center gap-4 mb-6">
-                <div
-                    class="text-4xl font-bold {% if product.current_price and product.target_price %}{% if product.current_price <= product.target_price %}text-green-600 dark:text-green-400{% else %}text-red-600 dark:text-red-400{% endif %}{% else %}text-gray-900 dark:text-white{% endif %} mb-2">
-                    {{ product.currency }}{{ product.current_price }}</div>
-                <div class="text-sm text-gray-500 dark:text-gray-400">Target: {{ product.currency }}{{ product.target_price }}</div>
-                {% if product.is_below_threshold %}
-                <span
-                    class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 px-3 py-1 rounded-full text-sm font-bold">
-                    {{ percentage_diff }}% BELOW TARGET
-                </span>
+            <div class="flex items-end gap-4 mb-8">
+                <div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Current Price</div>
+                    <div
+                        class="text-5xl font-bold {% if product.is_below_threshold %}text-green-500{% else %}dark:text-white{% endif %}">
+                        {{ product.currency }}{{ product.current_price }}
+                    </div>
+                </div>
+                {% if percentage_diff %}
+                <div class="mb-2">
+                    <span
+                        class="bg-green-500 text-white px-3 py-1 rounded-lg text-sm font-bold shadow-lg shadow-green-500/30">
+                        <i class="fas fa-arrow-down mr-1"></i>{{ percentage_diff }}%
+                    </span>
+                </div>
                 {% endif %}
             </div>
 
             <div class="grid grid-cols-2 gap-4">
-                <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">Target Price</div>
-                    <div class="text-lg font-semibold">{{ product.currency }}{{ product.target_price }}</div>
+                <div
+                    class="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-transparent hover:border-primary/20 transition-colors">
+                    <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-1">
+                        <i class="fas fa-crosshairs"></i> Target Price
+                    </div>
+                    <div class="text-xl font-bold dark:text-white">{{ product.currency }}{{ product.target_price }}
+                    </div>
                 </div>
-                <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">Lowest Price</div>
+                <div
+                    class="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-transparent hover:border-primary/20 transition-colors">
+                    <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-1">
+                        <i class="fas fa-tag"></i> Lowest Price
+                    </div>
                     <div
-                        class="text-lg font-semibold {% if lowest_price and product.target_price %}{% if lowest_price <= product.target_price %}text-green-500{% else %}text-gray-900 dark:text-white{% endif %}{% else %}text-gray-900 dark:text-white{% endif %}">
+                        class="text-xl font-bold {% if lowest_price <= product.target_price %}text-green-500{% else %}dark:text-white{% endif %}">
                         {{ product.currency }}{{ lowest_price|default:product.current_price }}
                     </div>
                 </div>
@@ -59,46 +92,44 @@
         </div>
 
         <!-- Column 3: Actions & Score (3 cols) -->
-        <div class="lg:col-span-3 p-8 bg-gray-50 dark:bg-gray-800/50">
-            <!-- Deal Score Gauge -->
-            <div class="mb-8 text-center">
-                <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Deal
-                    Score</h3>
-                <div class="relative w-32 h-32 mx-auto">
+        <div class="lg:col-span-3 p-8 bg-gray-50/30 dark:bg-black/20 backdrop-blur-sm flex flex-col justify-between">
+            <!-- Deal Score -->
+            <div class="text-center">
+                <h3 class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-6">Deal Score
+                </h3>
+                <div class="relative w-32 h-32 mx-auto mb-4">
                     <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                        <!-- Background Circle -->
                         <path class="text-gray-200 dark:text-gray-700"
                             d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                             fill="none" stroke="currentColor" stroke-width="3" />
-                        <!-- Value Circle -->
-                        <path class="text-secondary transition-all duration-1000 ease-out"
+                        <path class="text-primary transition-all duration-1000 ease-out drop-shadow-lg"
                             stroke-dasharray="{{ deal_score }}, 100"
                             d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                            fill="none" stroke="currentColor" stroke-width="3" />
+                            fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
                     </svg>
                     <div class="absolute inset-0 flex items-center justify-center flex-col">
-                        <span class="text-3xl font-bold text-gray-900 dark:text-white">{{ deal_score }}</span>
-                        <span class="text-xs text-gray-500">SCORE</span>
+                        <span class="text-3xl font-bold dark:text-white">{{ deal_score }}</span>
                     </div>
                 </div>
-                <p class="text-sm text-gray-500 mt-2">
-                    {% if deal_score >= 80 %}Excellent Deal!{% elif deal_score >= 50 %}Good Price{% else %}Wait for
+                <p
+                    class="text-sm font-medium {% if deal_score >= 80 %}text-green-500{% elif deal_score >= 50 %}text-yellow-500{% else %}text-red-500{% endif %}">
+                    {% if deal_score >= 80 %}Excellent Deal{% elif deal_score >= 50 %}Good Price{% else %}Wait for
                     Drop{% endif %}
                 </p>
             </div>
 
             <!-- Actions -->
-            <div class="space-y-3">
+            <div class="space-y-3 mt-8">
                 <a href="{{ product.url }}" target="_blank"
-                    class="block w-full bg-primary hover:bg-blue-600 text-white text-center py-3 rounded-lg font-bold shadow-lg shadow-blue-500/30 transition-all transform hover:-translate-y-0.5">
-                    Buy Now
+                    class="block w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white text-center py-3.5 rounded-xl font-bold shadow-lg shadow-primary/30 transition-all transform hover:-translate-y-0.5">
+                    Buy Now <i class="fas fa-external-link-alt ml-1 text-xs opacity-70"></i>
                 </a>
                 <a href="{% url 'update_prices' %}"
-                    class="block w-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-center py-3 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                    class="block w-full bg-white dark:bg-white/5 hover:bg-gray-50 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-white text-center py-3.5 rounded-xl font-medium transition-colors">
                     Check Price
                 </a>
                 <a href="{% url 'delete_product' product.id %}" onclick="return confirm('Stop tracking this product?')"
-                    class="block w-full text-red-500 hover:text-red-600 text-center py-2 text-sm">
+                    class="block w-full text-red-500 hover:text-red-600 text-center py-2 text-sm font-medium opacity-70 hover:opacity-100 transition-opacity">
                     Stop Tracking
                 </a>
             </div>
@@ -106,14 +137,16 @@
     </div>
 </div>
 
-
 <!-- Comparison Section -->
-<div class="mt-8 bg-white dark:bg-dark rounded-xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="text-xl font-bold text-gray-900 dark:text-white">Compare Prices</h2>
+<div class="mt-8 glass-panel rounded-3xl shadow-lg p-8">
+    <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+        <div>
+            <h2 class="text-2xl font-bold dark:text-white mb-1">Compare Prices</h2>
+            <p class="text-gray-500 dark:text-gray-400 text-sm">Find better deals across other stores</p>
+        </div>
         <button id="compare-btn" onclick="fetchAlternatives()"
-            class="bg-secondary hover:bg-teal-600 text-white px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
-            <i class="fas fa-search"></i> Find Better Deals
+            class="bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-white px-6 py-3 rounded-xl font-medium transition-all flex items-center gap-2 shadow-sm border border-transparent hover:border-primary/20">
+            <i class="fas fa-search text-primary"></i> Find Better Deals
         </button>
     </div>
 
@@ -123,13 +156,18 @@
         </div>
     </div>
 
-    <div id="comparison-loading" class="hidden text-center py-8">
-        <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent"></div>
-        <p class="mt-2 text-gray-500">Searching other stores...</p>
+    <div id="comparison-loading" class="hidden text-center py-12">
+        <div class="inline-block animate-spin rounded-full h-10 w-10 border-4 border-primary border-t-transparent">
+        </div>
+        <p class="mt-4 text-gray-500 dark:text-gray-400 font-medium">Searching other stores...</p>
     </div>
 
-    <div id="comparison-empty" class="hidden text-center py-8 text-gray-500">
-        No alternative prices found.
+    <div id="comparison-empty" class="hidden text-center py-12">
+        <div
+            class="w-16 h-16 bg-gray-100 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
+            <i class="fas fa-search-minus text-2xl"></i>
+        </div>
+        <p class="text-gray-500 dark:text-gray-400">No alternative prices found.</p>
     </div>
 </div>
 
@@ -174,32 +212,35 @@
 
                         // Create section header
                         const sectionHeader = document.createElement('div');
-                        sectionHeader.className = 'col-span-full mt-4 first:mt-0';
+                        sectionHeader.className = 'col-span-full mt-6 first:mt-0 mb-2';
                         sectionHeader.innerHTML = `
-                            <div class="flex items-center gap-2">
-                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">${source}</h3>
-                                <span class="text-sm text-gray-500 dark:text-gray-400">(${items.length} ${items.length === 1 ? 'result' : 'results'})</span>
+                            <div class="flex items-center gap-3">
+                                <div class="h-8 w-1 bg-primary rounded-full"></div>
+                                <h3 class="text-lg font-bold text-gray-900 dark:text-white">${source}</h3>
+                                <span class="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-white/10 text-xs font-medium text-gray-500 dark:text-gray-400">${items.length} results</span>
                             </div>
-                            <div class="h-px bg-gray-200 dark:bg-gray-700 mt-2"></div>
                         `;
                         grid.appendChild(sectionHeader);
 
                         // Render items for this source
                         items.forEach(item => {
                             const card = document.createElement('div');
-                            card.className = 'bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 flex justify-between items-center';
+                            card.className = 'bg-gray-50 dark:bg-white/5 p-4 rounded-2xl border border-transparent hover:border-primary/20 transition-all group';
 
                             const currentPrice = parseFloat("{{ product.current_price|default:0|stringformat:'f' }}");
-                            const priceClass = item.price < currentPrice ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-white';
+                            const priceClass = item.price < currentPrice ? 'text-green-500' : 'text-gray-900 dark:text-white';
+                            const priceIcon = item.price < currentPrice ? '<i class="fas fa-arrow-down text-xs ml-1"></i>' : '';
 
                             card.innerHTML = `
-                            <div>
-                                <div class="font-medium text-gray-900 dark:text-white line-clamp-1" title="${item.title}">${item.title}</div>
-                                <div class="text-lg font-bold ${priceClass} mt-1">${item.currency}${item.price}</div>
+                            <div class="flex justify-between items-start gap-4">
+                                <div class="min-w-0 flex-1">
+                                    <div class="font-medium text-gray-900 dark:text-white line-clamp-2 text-sm mb-2 group-hover:text-primary transition-colors" title="${item.title}">${item.title}</div>
+                                    <div class="text-xl font-bold ${priceClass}">${item.currency}${item.price}${priceIcon}</div>
+                                </div>
+                                <a href="${item.url}" target="_blank" class="w-10 h-10 rounded-xl bg-white dark:bg-white/10 flex items-center justify-center text-gray-400 hover:text-primary hover:bg-gray-50 dark:hover:bg-white/20 transition-colors shadow-sm shrink-0">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </a>
                             </div>
-                            <a href="${item.url}" target="_blank" class="ml-4 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-primary border border-gray-200 dark:border-gray-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap">
-                                View
-                            </a>
                         `;
                             grid.appendChild(card);
                         });
@@ -213,10 +254,9 @@
                 loading.classList.add('hidden');
                 btn.disabled = false;
                 btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                empty.textContent = "Error searching for prices. Please try again.";
+                empty.innerHTML = '<div class="text-red-500">Error searching for prices. Please try again.</div>';
                 empty.classList.remove('hidden');
             });
     }
 </script>
-
 {% endblock %}

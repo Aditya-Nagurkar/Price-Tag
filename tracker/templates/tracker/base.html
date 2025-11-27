@@ -6,68 +6,188 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PriceTag</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        primary: '#3B82F6',
-                        secondary: '#10B981',
-                        dark: '#1F2937',
-                        darker: '#111827',
+                        primary: '#8B5CF6', // Violet
+                        secondary: '#10B981', // Emerald
+                        dark: '#0B0F19', // Deep Dark
+                        surface: '#151B2B', // Card Surface
+                        accent: '#F472B6', // Pink
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
                     }
                 }
             }
         }
     </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Light Mode Background */
+        body {
+            background-color: #F3F4F6;
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.05) 0%, transparent 20%);
+        }
+
+        /* Dark Mode Background */
+        .dark body {
+            background-color: #0B0F19;
+            background-image:
+                radial-gradient(circle at 50% 0%, #1e1b4b 0%, transparent 50%),
+                radial-gradient(circle at 80% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 30%);
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .dark .glass {
+            background: rgba(21, 27, 43, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(229, 231, 235, 0.5);
+        }
+
+        .dark .glass-panel {
+            background: #151B2B;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #A78BFA 0%, #F472B6 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-pill {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .dark .nav-pill {
+            background: rgba(21, 27, 43, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #CBD5E1;
+            border-radius: 4px;
+        }
+
+        .dark ::-webkit-scrollbar-thumb {
+            background: #334155;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94A3B8;
+        }
+
+        .dark ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
         }
     </style>
 </head>
 
-<body class="bg-gray-100 dark:bg-darker text-gray-900 dark:text-gray-100 transition-colors duration-200">
-    <nav class="bg-white dark:bg-dark shadow-md">
-        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <a href="{% url 'dashboard' %}" class="text-2xl font-bold text-primary flex items-center gap-2">
-                <i class="fas fa-tag"></i> PriceTag
+<body class="text-gray-900 dark:text-gray-100 antialiased">
+
+    <!-- Floating Navbar -->
+    <div class="fixed top-0 left-0 right-0 z-50 px-4 py-4">
+        <nav
+            class="container mx-auto max-w-7xl nav-pill rounded-2xl shadow-lg px-6 py-3 flex justify-between items-center transition-all duration-300">
+            <a href="{% url 'dashboard' %}" class="text-2xl font-bold flex items-center gap-2 group">
+                <div
+                    class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-sm shadow-lg group-hover:scale-110 transition-transform">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <span
+                    class="bg-clip-text text-transparent bg-gradient-to-r from-gray-800 to-gray-600 dark:from-white dark:to-gray-300">PriceTag</span>
             </a>
+
+            <!-- Search Bar (Visual Only for now) -->
+            <div class="hidden md:flex items-center flex-1 max-w-md mx-8">
+                <div class="relative w-full group">
+                    <i
+                        class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors"></i>
+                    <input type="text" placeholder="Search..."
+                        class="w-full bg-gray-100 dark:bg-dark/50 border border-transparent focus:border-primary/50 text-sm rounded-xl py-2 pl-10 pr-4 outline-none transition-all dark:text-white placeholder-gray-500">
+                </div>
+            </div>
+
             <div class="flex items-center gap-4">
                 {% if user.is_authenticated %}
-                <span class="text-sm text-gray-600 dark:text-gray-400 hidden md:inline">{{ user.email }}</span>
-                <form method="post" action="{% url 'logout' %}" class="inline">
-                    {% csrf_token %}
-                    <button type="submit"
-                        class="text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors">
-                        Logout
-                    </button>
-                </form>
+                <div class="flex items-center gap-3">
+                    <div class="text-right hidden sm:block">
+                        <div class="text-sm font-medium">{{ user.username }}</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">Pro Member</div>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-r from-primary to-purple-600 p-[2px]">
+                        <div
+                            class="w-full h-full rounded-full bg-white dark:bg-dark flex items-center justify-center overflow-hidden">
+                            <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=random" alt="User"
+                                class="w-full h-full object-cover">
+                        </div>
+                    </div>
+                    <form method="post" action="{% url 'logout' %}" class="inline ml-2">
+                        {% csrf_token %}
+                        <button type="submit" class="text-gray-400 hover:text-red-500 transition-colors" title="Logout">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </form>
+                </div>
                 {% else %}
-                <a href="{% url 'login' %}"
-                    class="text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors">
-                    Login
-                </a>
+                <a href="{% url 'login' %}" class="text-sm font-medium hover:text-primary transition-colors">Login</a>
                 {% endif %}
+
                 <button id="theme-toggle"
-                    class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                    class="w-10 h-10 rounded-xl bg-gray-100 dark:bg-dark/50 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-dark/80 transition-all">
                     <i class="fas fa-moon dark:hidden"></i>
                     <i class="fas fa-sun hidden dark:block text-yellow-400"></i>
                 </button>
             </div>
-        </div>
-    </nav>
+        </nav>
+    </div>
 
-    <main class="container mx-auto px-6 py-8">
+    <main class="container mx-auto px-4 pt-28 pb-12 max-w-7xl">
         {% if messages %}
-        <div class="mb-6">
+        <div class="mb-8 grid gap-2">
             {% for message in messages %}
             <div
-                class="p-4 rounded-lg mb-2 {% if message.tags == 'error' %}bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-100{% else %}bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-100{% endif %}">
+                class="p-4 rounded-xl flex items-center gap-3 shadow-sm {% if message.tags == 'error' %}bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 border border-red-100 dark:border-red-900/30{% else %}bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400 border border-green-100 dark:border-green-900/30{% endif %}">
+                <i
+                    class="fas {% if message.tags == 'error' %}fa-exclamation-circle{% else %}fa-check-circle{% endif %}"></i>
                 {{ message }}
             </div>
             {% endfor %}
