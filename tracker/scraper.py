@@ -282,14 +282,38 @@ def get_product_details(url):
 
             # Flipkart Mobile Fallback
             if not price and 'flipkart.com' in url:
-                # Search for price text directly
-                price_text_regex = re.compile(r'₹\d{1,3}(?:,\d{3})*(?:\.\d+)?')
-                price_node = soup.find(string=price_text_regex)
-                if price_node:
-                    cleaned, detected_currency = clean_price(price_node)
-                    if cleaned:
-                        price = cleaned
-                        currency = detected_currency
+                # Strategy 3: Regex for JSON fields (finalPrice, fsp)
+                # Found in window.__INITIAL_STATE__ or similar blobs
+                # e.g. "ppd":{"fsp":51999,"finalPrice":51999,...}
+                json_price_regexes = [
+                    re.compile(r'"finalPrice":\s*(\d+)'),
+                    re.compile(r'"fsp":\s*(\d+)'),
+                    re.compile(r'"displayPrice":\s*(\d+)'),
+                ]
+                
+                json_match_found = False
+                for regex in json_price_regexes:
+                    match = regex.search(str(soup))
+                    if match:
+                        val = float(match.group(1))
+                        json_match_found = True
+                        if val > 0:
+                            price = val
+                            currency = '₹'
+                            break
+                        # If val is 0, we found the key but it's 0. 
+                        # This likely means unavailable/sold out.
+                        # We mark json_match_found=True so we don't fall back to aggressive regex.
+
+                if not price and not json_match_found:
+                    # Search for price text directly ONLY if JSON method failed to find keys
+                    price_text_regex = re.compile(r'₹\d{1,3}(?:,\d{3})*(?:\.\d+)?')
+                    price_node = soup.find(string=price_text_regex)
+                    if price_node:
+                        cleaned, detected_currency = clean_price(price_node)
+                        if cleaned:
+                            price = cleaned
+                            currency = detected_currency
 
         # Standard meta tag extraction (fallback for Amazon, primary for others)
         if not image_url:

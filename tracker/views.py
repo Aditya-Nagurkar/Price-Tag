@@ -150,6 +150,8 @@ def get_price_history(request, product_id):
     from django.http import JsonResponse
     return JsonResponse(data)
 
+from django.db.models import Min
+
 def product_detail(request, product_id):
     """View product details and price history."""
     product = get_object_or_404(Product, id=product_id)
@@ -185,6 +187,9 @@ def product_detail(request, product_id):
     # Get price history for chart
     history = product.price_history.all().order_by('timestamp')
     
+    # Calculate lowest price
+    lowest_price = product.price_history.aggregate(Min('price'))['price__min']
+    
     # Calculate deal score (0-100)
     deal_score = 0
     if product.current_price and product.target_price:
@@ -205,6 +210,7 @@ def product_detail(request, product_id):
         'history': history,
         'deal_score': deal_score,
         'percentage_diff': percentage_diff,
+        'lowest_price': lowest_price,
     }
     return render(request, 'tracker/product_detail.html', context)
 

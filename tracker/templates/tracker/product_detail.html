@@ -50,12 +50,10 @@
                 </div>
                 <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                     <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">Lowest Price</div>
-                    {% with lowest=product.price_history.all|dictsort:"price"|first %}
                     <div
-                        class="text-lg font-semibold {% if lowest.price and product.target_price %}{% if lowest.price <= product.target_price %}text-green-500{% else %}text-gray-900 dark:text-white{% endif %}{% else %}text-gray-900 dark:text-white{% endif %}">
-                        {{ product.currency }}{{ lowest.price|default:product.current_price }}
+                        class="text-lg font-semibold {% if lowest_price and product.target_price %}{% if lowest_price <= product.target_price %}text-green-500{% else %}text-gray-900 dark:text-white{% endif %}{% else %}text-gray-900 dark:text-white{% endif %}">
+                        {{ product.currency }}{{ lowest_price|default:product.current_price }}
                     </div>
-                    {% endwith %}
                 </div>
             </div>
         </div>
