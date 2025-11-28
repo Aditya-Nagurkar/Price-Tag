@@ -12,10 +12,17 @@ def dashboard(request):
     total_items = products.count()
     deals_found = sum(1 for p in products if p.is_below_threshold)
     
+    total_savings = sum(
+        (p.target_price - p.current_price) 
+        for p in products 
+        if p.is_below_threshold and p.current_price and p.target_price
+    )
+    
     context = {
         'products': products,
         'total_items': total_items,
         'deals_found': deals_found,
+        'total_savings': total_savings,
     }
     return render(request, 'tracker/dashboard.html', context)
 
@@ -24,6 +31,52 @@ def product_list(request):
         return redirect('login')
     products = Product.objects.filter(user=request.user).order_by('-created_at')
     return render(request, 'tracker/product_list.html', {'products': products})
+
+def deal_list(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
+    # Get all products for the user
+    all_products = Product.objects.filter(user=request.user).order_by('-created_at')
+    # Filter for deals in python since is_below_threshold is likely a property
+    deals = [p for p in all_products if p.is_below_threshold]
+    return render(request, 'tracker/deal_list.html', {'products': deals})
+
+def search_tracked_products(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
+    
+    query = request.GET.get('q', '')
+    products = Product.objects.filter(user=request.user, name__icontains=query).order_by('-created_at')
+    
+    context = {
+        'products': products,
+        'search_query': query
+    }
+    return render(request, 'tracker/product_list.html', context)
+
+def api_search_products(request):
+    """API endpoint for live search."""
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    query = request.GET.get('q', '')
+    if len(query) < 2:
+        return JsonResponse({'results': []})
+        
+    products = Product.objects.filter(user=request.user, name__icontains=query).order_by('-created_at')[:5]
+    
+    results = []
+    for p in products:
+        results.append({
+            'id': p.id,
+            'name': p.name,
+            'image_url': p.image_url,
+            'current_price': float(p.current_price) if p.current_price else None,
+            'currency': p.currency,
+            'url': f"/product/{p.id}/" # Construct detail URL manually or use reverse in loop
+        })
+        
+    return JsonResponse({'results': results})
 
 def add_product(request):
     if request.method == 'POST':
@@ -266,3 +319,32 @@ def signup(request):
     else:
         form = SignUpForm()
     return render(request, 'tracker/signup.html', {'form': form})
+
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def profile(request):
+    products = Product.objects.filter(user=request.user)
+    total_products = products.count()
+    
+    # Calculate active deals (products below target price)
+    active_deals = sum(1 for p in products if p.is_below_threshold)
+    
+    # Calculate potential savings
+    potential_savings = sum(
+        (p.target_price - p.current_price) 
+        for p in products 
+        if p.is_below_threshold and p.current_price and p.target_price
+    )
+    
+    context = {
+        'total_products': total_products,
+        'active_deals': active_deals,
+        'potential_savings': potential_savings,
+    }
+    context = {
+        'total_products': total_products,
+        'active_deals': active_deals,
+        'potential_savings': potential_savings,
+    }
+    return render(request, 'tracker/profile.html', context)

@@ -5,7 +5,8 @@
 <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
     <div>
         <h1 class="text-3xl font-bold mb-1 dark:text-white">Dashboard</h1>
-        <p class="text-gray-500 dark:text-gray-400 text-sm">Welcome back, {{ user.username }}</p>
+        <p class="text-gray-500 dark:text-gray-400 text-sm">Welcome back, {{ user.get_full_name|default:user.username }}
+        </p>
     </div>
     <div class="flex gap-3">
         <a href="{% url 'update_prices' %}"
@@ -22,22 +23,28 @@
 <!-- Main Grid Layout -->
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-    <!-- Left Column: Watchlist (3 cols) -->
-    <div class="lg:col-span-3 space-y-6">
+    <!-- Left Column: Watchlist (4 cols) -->
+    <div class="lg:col-span-4 space-y-6">
         <div class="glass-panel rounded-3xl p-5 h-full">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="font-semibold text-lg dark:text-white">My Watchlist</h2>
-                <a href="{% url 'product_list' %}"
-                    class="text-sm text-primary hover:text-accent transition-colors font-medium">
-                    View All
-                </a>
+                <div class="flex gap-3">
+                    <a href="{% url 'deal_list' %}"
+                        class="text-sm text-green-500 hover:text-green-600 transition-colors font-medium">
+                        Deals
+                    </a>
+                    <a href="{% url 'product_list' %}"
+                        class="text-sm text-primary hover:text-accent transition-colors font-medium">
+                        View All
+                    </a>
+                </div>
             </div>
 
-            <div class="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-                {% for product in products %}
+            <div class="space-y-5 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                {% for product in products|slice:":5" %}
                 <a href="{% url 'product_detail' product.id %}" class="block group">
                     <div
-                        class="p-3 rounded-2xl bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors flex items-center gap-3 border border-transparent hover:border-primary/20">
+                        class="p-3 rounded-2xl bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors flex items-center gap-3 border border-gray-200 dark:border-transparent hover:border-primary/20">
                         <div
                             class="w-12 h-12 rounded-xl bg-white dark:bg-dark p-2 flex items-center justify-center shrink-0 shadow-sm">
                             {% if product.image_url %}
@@ -52,7 +59,9 @@
                                 class="text-sm font-medium truncate dark:text-gray-200 group-hover:text-primary transition-colors">
                                 {{ product.name }}</h3>
                             <div class="flex justify-between items-center mt-1">
-                                <span class="text-xs text-gray-500 dark:text-gray-400">{{ product.currency }}{{product.current_price|default:"N/A" }}</span>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">
+                                    {{ product.currency }}{{ product.current_price|default:"N/A" }}
+                                </span>
                                 {% if product.is_below_threshold %}
                                 <span
                                     class="text-[10px] bg-green-500/10 text-green-500 px-1.5 py-0.5 rounded font-medium">DEAL</span>
@@ -71,9 +80,47 @@
         </div>
     </div>
 
-    <!-- Center Column: Featured/Main (6 cols) -->
-    <div class="lg:col-span-6 space-y-6">
+    <!-- Center Column: Featured/Main (8 cols) -->
+    <div class="lg:col-span-8 space-y-6">
         {% if products %}
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Total Products -->
+            <div class="glass-panel p-4 rounded-2xl flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center text-xl">
+                    <i class="fas fa-box"></i>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold dark:text-white">{{ total_items }}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">Total Tracked</div>
+                </div>
+            </div>
+
+            <!-- Active Deals -->
+            <div class="glass-panel p-4 rounded-2xl flex items-center gap-4">
+                <div
+                    class="w-12 h-12 rounded-xl bg-green-500/10 text-green-500 flex items-center justify-center text-xl">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold dark:text-white">{{ deals_found }}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">Active Deals</div>
+                </div>
+            </div>
+
+            <!-- Total Savings -->
+            <div class="glass-panel p-4 rounded-2xl flex items-center gap-4">
+                <div
+                    class="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center text-xl">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold dark:text-white">₹{{ total_savings|floatformat:0 }}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">Potential Savings</div>
+                </div>
+            </div>
+        </div>
+
         {% with featured=products.0 %}
         <div class="glass-panel rounded-3xl p-6 relative overflow-hidden group">
             <!-- Background Glow -->
@@ -81,65 +128,79 @@
                 class="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none">
             </div>
 
-            <div class="flex justify-between items-start mb-6 relative z-10">
-                <div>
-                    <span
-                        class="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-2 border border-primary/20">
-                        <i class="fas fa-star mr-1"></i> Featured
-                    </span>
-                    <h2 class="text-2xl font-bold dark:text-white leading-tight mb-1 line-clamp-2">{{ featured.name }}
-                    </h2>
-                    <p class="text-gray-500 dark:text-gray-400 text-sm">Tracked since {{ featured.created_at|date:"M d,Y" }}</p>
-                </div>
-                <button
-                    class="w-10 h-10 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center text-gray-400 hover:text-primary hover:bg-white dark:hover:bg-white/10 transition-all shadow-sm">
-                    <i class="far fa-bookmark"></i>
-                </button>
-            </div>
+            <div class="flex flex-col md:flex-row gap-6 relative z-10">
+                <!-- Image Section -->
+                <div class="w-full md:w-1/2">
+                    <div
+                        class="aspect-square md:aspect-auto md:h-full bg-gradient-to-br from-gray-50 to-gray-100 dark:from-white/5 dark:to-white/5 rounded-2xl flex items-center justify-center p-6 relative group-hover:scale-[1.02] transition-transform duration-500 border border-gray-200 dark:border-transparent">
+                        {% if featured.image_url %}
+                        <img src="{{ featured.image_url }}" alt="{{ featured.name }}"
+                            class="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal drop-shadow-xl">
+                        {% else %}
+                        <i class="fas fa-image text-6xl text-gray-300"></i>
+                        {% endif %}
 
-            <div
-                class="aspect-video bg-gradient-to-br from-gray-50 to-gray-100 dark:from-white/5 dark:to-white/5 rounded-2xl mb-6 flex items-center justify-center p-8 relative group-hover:scale-[1.02] transition-transform duration-500">
-                {% if featured.image_url %}
-                <img src="{{ featured.image_url }}" alt="{{ featured.name }}"
-                    class="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal drop-shadow-xl">
-                {% else %}
-                <i class="fas fa-image text-6xl text-gray-300"></i>
-                {% endif %}
-
-                {% if featured.is_below_threshold %}
-                <div
-                    class="absolute bottom-4 right-4 bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow-lg shadow-green-500/30 flex items-center gap-1">
-                    <i class="fas fa-arrow-down"></i> Deal
+                        {% if featured.is_below_threshold %}
+                        <div
+                            class="absolute bottom-4 right-4 bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow-lg shadow-green-500/30 flex items-center gap-1">
+                            <i class="fas fa-arrow-down"></i> Deal
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
-                {% endif %}
-            </div>
 
-            <div class="grid grid-cols-2 gap-4 mb-6">
-                <div
-                    class="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-transparent hover:border-primary/10 transition-colors">
-                    <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Current Price</div>
-                    <div class="text-2xl font-bold dark:text-white">{{ featured.currency }}{{featured.current_price|default:"N/A" }}</div>
-                </div>
-                <div
-                    class="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-transparent hover:border-primary/10 transition-colors">
-                    <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Target Price</div>
-                    <div class="text-2xl font-bold text-gray-400">{{ featured.currency }}{{ featured.target_price }}
+                <!-- Details Section -->
+                <div class="w-full md:w-1/2 flex flex-col">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <span
+                                class="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-2 border border-primary/20">
+                                <i class="fas fa-star mr-1"></i> Featured
+                            </span>
+                            <h2 class="text-2xl font-bold dark:text-white leading-tight mb-1 line-clamp-2">
+                                {{ featured.name }}
+                            </h2>
+                            <p class="text-gray-500 dark:text-gray-400 text-sm">
+                                Tracked since {{ featured.created_at|date:"M d, Y" }}
+                            </p>
+                        </div>
+
+                    </div>
+
+                    <div class="flex-1"></div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div
+                            class="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-transparent hover:border-primary/10 transition-colors">
+                            <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Current Price</div>
+                            <div class="text-2xl font-bold dark:text-white">
+                                {{ featured.currency }}{{ featured.current_price|default:"N/A" }}
+                            </div>
+                        </div>
+                        <div
+                            class="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-transparent hover:border-primary/10 transition-colors">
+                            <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">Target Price</div>
+                            <div class="text-2xl font-bold text-gray-400">
+                                {{ featured.currency }}{{ featured.target_price }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3">
+                        <a href="{% url 'product_detail' featured.id %}"
+                            class="flex-1 bg-gray-900 dark:bg-white text-white dark:text-dark py-3 rounded-xl font-semibold text-center hover:opacity-90 transition-opacity shadow-lg">
+                            View Details
+                        </a>
+                        <a href="{{ featured.url }}" target="_blank"
+                            class="px-4 py-3 rounded-xl bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-white font-medium hover:bg-gray-200 dark:hover:bg-white/20 transition-colors">
+                            <i class="fas fa-external-link-alt"></i>
+                        </a>
                     </div>
                 </div>
             </div>
-
-            <div class="flex gap-3">
-                <a href="{% url 'product_detail' featured.id %}"
-                    class="flex-1 bg-gray-900 dark:bg-white text-white dark:text-dark py-3 rounded-xl font-semibold text-center hover:opacity-90 transition-opacity shadow-lg">
-                    View Details
-                </a>
-                <a href="{{ featured.url }}" target="_blank"
-                    class="px-4 py-3 rounded-xl bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-white font-medium hover:bg-gray-200 dark:hover:bg-white/20 transition-colors">
-                    <i class="fas fa-external-link-alt"></i>
-                </a>
-            </div>
         </div>
         {% endwith %}
+
         {% else %}
         <div class="glass-panel rounded-3xl p-12 text-center">
             <div
@@ -157,82 +218,7 @@
         {% endif %}
     </div>
 
-    <!-- Right Column: Deal Feed (3 cols) -->
-    <div class="lg:col-span-3 space-y-6">
-        <div class="glass-panel rounded-3xl p-5 h-full">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="font-semibold text-lg dark:text-white">Deal Feed</h2>
-                <button class="text-gray-400 hover:text-primary transition-colors">
-                    <i class="fas fa-ellipsis-h"></i>
-                </button>
-            </div>
-
-            <div class="space-y-3">
-                {% for product in products %}
-                {% if product.is_below_threshold %}
-                <a href="{% url 'product_detail' product.id %}" class="block group">
-                    <div
-                        class="p-4 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-white/5 dark:to-white/5 border border-transparent hover:border-green-500/30 transition-all relative overflow-hidden">
-                        <div class="absolute top-0 right-0 w-16 h-16 bg-green-500/10 rounded-full blur-xl -mr-8 -mt-8">
-                        </div>
-
-                        <div class="flex gap-3 mb-3">
-                            <div
-                                class="w-10 h-10 rounded-lg bg-white dark:bg-dark p-1.5 flex items-center justify-center shadow-sm">
-                                {% if product.image_url %}
-                                <img src="{{ product.image_url }}" alt="{{ product.name }}"
-                                    class="w-full h-full object-contain">
-                                {% else %}
-                                <i class="fas fa-tag text-gray-300"></i>
-                                {% endif %}
-                            </div>
-                            <div class="min-w-0 flex-1">
-                                <h4 class="text-sm font-medium truncate dark:text-gray-200">{{ product.name }}</h4>
-                                <div class="text-xs text-green-500 font-medium flex items-center gap-1">
-                                    <i class="fas fa-arrow-down"></i> Price Drop
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="flex justify-between items-end">
-                            <div>
-                                <div class="text-xs text-gray-500 dark:text-gray-400">Now</div>
-                                <div class="text-lg font-bold dark:text-white">{{ product.currency }}{{product.current_price }}</div>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-xs text-gray-500 dark:text-gray-400">Target</div>
-                                <div class="text-sm font-medium text-gray-400 line-through">{{ product.currency }}{{product.target_price }}</div>
-                            </div>
-                        </div>
-                    </div>
-                </a>
-                {% endif %}
-                {% empty %}
-                <div class="text-center py-8 text-gray-400">
-                    <i class="fas fa-check-circle text-2xl mb-2"></i>
-                    <p class="text-sm">No deals right now</p>
-                </div>
-                {% endfor %}
-            </div>
-
-            <!-- Price Drop Alert Widget (Static for now, matching reference) -->
-            <div class="mt-6 pt-6 border-t border-gray-100 dark:border-white/5">
-                <h3
-                    class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider text-[10px]">
-                    Alerts</h3>
-                <div class="p-3 rounded-xl bg-orange-500/10 border border-orange-500/20 flex gap-3 items-start">
-                    <div
-                        class="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center text-orange-500 shrink-0">
-                        <i class="fas fa-bell"></i>
-                    </div>
-                    <div>
-                        <h4 class="text-sm font-medium dark:text-gray-200">Price Drop Alert</h4>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Notifications enabled for {{total_items }} products</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+</div>
 </div>
 
 <!-- Add Product Modal -->

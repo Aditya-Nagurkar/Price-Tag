@@ -10,8 +10,20 @@
 
 <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
     <div>
-        <h1 class="text-3xl font-bold mb-1 dark:text-white">My Watchlist</h1>
-        <p class="text-gray-500 dark:text-gray-400 text-sm">Tracking {{ products.count }} products</p>
+        <h1 class="text-3xl font-bold mb-1 dark:text-white">
+            {% if search_query %}
+            Search Results for "{{ search_query }}"
+            {% else %}
+            My Watchlist
+            {% endif %}
+        </h1>
+        <p class="text-gray-500 dark:text-gray-400 text-sm">
+            {% if search_query %}
+            Found {{ products.count }} matching products
+            {% else %}
+            Tracking {{ products.count }} products
+            {% endif %}
+        </p>
     </div>
     <div class="flex gap-3">
         <button onclick="document.getElementById('add-modal').classList.remove('hidden')"
@@ -50,11 +62,15 @@
             <div class="flex justify-between items-end mt-auto">
                 <div>
                     <div class="text-xs text-gray-500 dark:text-gray-400">Current</div>
-                    <div class="text-lg font-bold dark:text-white">{{ product.currency }}{{ product.current_price|default:"N/A" }}</div>
+                    <div class="text-lg font-bold dark:text-white">
+                        {{ product.currency }}{{ product.current_price|default:"N/A" }}
+                    </div>
                 </div>
                 <div class="text-right">
                     <div class="text-xs text-gray-500 dark:text-gray-400">Target</div>
-                    <div class="text-sm font-medium text-gray-400 line-through">{{ product.currency }}{{ product.target_price }}</div>
+                    <div class="text-sm font-medium text-gray-400 line-through">
+                        {{ product.currency }}{{ product.target_price }}
+                    </div>
                 </div>
             </div>
         </div>
