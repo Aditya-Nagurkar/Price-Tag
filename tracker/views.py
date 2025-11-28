@@ -295,30 +295,36 @@ from django.contrib.auth import login
 from .forms import SignUpForm
 
 def signup(request):
-    if request.method == 'POST':
-        form = SignUpForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user, backend='tracker.backends.EmailBackend')
-            
-            # Send welcome email
-            try:
-                greeting_name = user.first_name if user.first_name else "there"
-                send_mail(
-                    'Welcome to PriceTag!',
-                    f'Hi {greeting_name},\n\nThanks for signing up for PriceTag! You can now track product prices and get notified when they drop.\n\nHappy tracking!',
-                    settings.EMAIL_HOST_USER,
-                    [user.email],
-                    fail_silently=True,
-                )
-            except Exception as e:
-                print(f"Failed to send welcome email: {e}")
+    try:
+        if request.method == 'POST':
+            form = SignUpForm(request.POST)
+            if form.is_valid():
+                user = form.save()
+                login(request, user, backend='tracker.backends.EmailBackend')
                 
-            messages.success(request, "Registration successful!")
-            return redirect('dashboard')
-    else:
-        form = SignUpForm()
-    return render(request, 'tracker/signup.html', {'form': form})
+                # Send welcome email
+                try:
+                    greeting_name = user.first_name if user.first_name else "there"
+                    send_mail(
+                        'Welcome to PriceTag!',
+                        f'Hi {greeting_name},\n\nThanks for signing up for PriceTag! You can now track product prices and get notified when they drop.\n\nHappy tracking!',
+                        settings.EMAIL_HOST_USER,
+                        [user.email],
+                        fail_silently=True,
+                    )
+                except Exception as e:
+                    print(f"Failed to send welcome email: {e}")
+                    
+                messages.success(request, "Registration successful!")
+                return redirect('dashboard')
+        else:
+            form = SignUpForm()
+        return render(request, 'tracker/signup.html', {'form': form})
+    except Exception as e:
+        import traceback
+        print(f"Signup Error: {str(e)}\n{traceback.format_exc()}")
+        messages.error(request, f"Error: {str(e)}")
+        return render(request, 'tracker/signup.html', {'form': SignUpForm(request.POST) if request.method == 'POST' else SignUpForm()})
 
 from django.contrib.auth.decorators import login_required
 
