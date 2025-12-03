@@ -33,3 +33,4 @@ class PriceHistory(models.Model):
 
     class Meta:
         ordering = ['-timestamp']
+        verbose_name_plural = 'Price History'
